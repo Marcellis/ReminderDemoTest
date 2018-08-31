@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -37,8 +38,17 @@ public class MainActivity extends AppCompatActivity {
         mNewReminderText = findViewById(R.id.editText_main);
 
         mReminders = new ArrayList<>();
-        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mReminders);
-        mListView.setAdapter(mAdapter);
+
+
+        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                mReminders.remove(position);
+                updateUI();
+                return true;
+            }
+        });
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -61,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 //Tell the adapter that the data set has been modified: the screen will be refreshed.
-                    mAdapter.notifyDataSetChanged();
+                updateUI();
 
 
                     //Initialize the EditText for the next item
@@ -79,6 +89,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
+    private void updateUI() {
+
+        if (mAdapter == null) {
+
+            mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mReminders);
+
+            mListView.setAdapter(mAdapter);
+
+        } else {
+
+            mAdapter.notifyDataSetChanged();
+
+        }
+
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
