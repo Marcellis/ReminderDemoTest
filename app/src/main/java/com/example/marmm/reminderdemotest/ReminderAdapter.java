@@ -13,9 +13,18 @@ import java.util.List;
 public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHolder> {
 
 
+    final private ReminderClickListener mReminderClickListener;
+
+
+    public interface ReminderClickListener{
+        void reminderOnClick (int i);
+    }
+
+
     private List<Reminder> mReminders;
 
-    public ReminderAdapter(List<Reminder> mReminders) {
+    public ReminderAdapter(ReminderClickListener mReminderClickListener, List<Reminder> mReminders) {
+        this.mReminderClickListener = mReminderClickListener;
         this.mReminders = mReminders;
     }
 
@@ -44,7 +53,7 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
     }
 
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         public TextView textView;
 
@@ -52,8 +61,14 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
         public ViewHolder(View itemView) {
             super(itemView);
             textView= itemView.findViewById(android.R.id.text1);
+            itemView.setOnClickListener(this);
 
         }
 
+        @Override
+        public void onClick(View v) {
+            int clickedposition = getAdapterPosition();
+            mReminderClickListener.reminderOnClick(clickedposition);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.marmm.reminderdemotest;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,15 +13,13 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ReminderAdapter.ReminderClickListener{
 
 
     private List<Reminder> mReminders;
@@ -30,6 +29,12 @@ public class MainActivity extends AppCompatActivity {
     private ReminderAdapter mAdapter;
 
     private RecyclerView mRecyclerView;
+
+    //Constants used when calling the update activity
+    public static final String EXTRA_REMINDER = "Reminder";
+    public static final int REQUESTCODE = 1234;
+    private int mModifyPosition;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,20 +136,14 @@ and uses callbacks to signal when a user is performing these actions.
 
 
     private void updateUI() {
-
         if (mAdapter == null) {
-
-            mAdapter = new ReminderAdapter(mReminders);
-
+            mAdapter = new ReminderAdapter(this, mReminders);
             mRecyclerView.setAdapter(mAdapter);
-
         } else {
-
             mAdapter.notifyDataSetChanged();
-
         }
-
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -167,4 +166,26 @@ and uses callbacks to signal when a user is performing these actions.
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void reminderOnClick(int i) {
+        Intent intent = new Intent(MainActivity.this, UpdateActivity.class);
+        mModifyPosition = i;
+        intent.putExtra(EXTRA_REMINDER,  mReminders.get(i));
+        startActivityForResult(intent, REQUESTCODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == REQUESTCODE) {
+            if (resultCode == RESULT_OK) {
+                Reminder updatedReminder = data.getParcelableExtra(MainActivity.EXTRA_REMINDER);
+                // New timestamp: timestamp of update
+                mReminders.set(mModifyPosition, updatedReminder);
+                updateUI();
+            }
+        }
+    }
+
 }
