@@ -54,23 +54,11 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
         mNewReminderText = findViewById(R.id.editText_main);
 
 
-        db = AppDatabase.getInstance(this);
-        updateUI();
-
 
         mReminders = new ArrayList<>();
 
-/*
-
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                mReminders.remove(position);
-                updateUI();
-                return true;
-            }
-        });
-*/
+        db = AppDatabase.getInstance(this);
+        updateUI();
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
