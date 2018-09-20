@@ -1,17 +1,29 @@
 package com.example.marmm.reminderdemotest;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+@Entity(tableName = "reminder")
 public class Reminder implements Parcelable {
 
 
-    private String mReminderText;
+    @PrimaryKey(autoGenerate = true)
+    public Long id;
 
-    public Reminder(String mReminderText) {
-        this.mReminderText = mReminderText;
+
+    @ColumnInfo(name = "remindertext")
+    public String mReminderText;
+
+    public Long getId() {
+        return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getmReminderText() {
         return mReminderText;
@@ -21,9 +33,9 @@ public class Reminder implements Parcelable {
         this.mReminderText = mReminderText;
     }
 
-    @Override
-    public String toString() {
-        return mReminderText;
+    public Reminder(String mReminderText) {
+
+        this.mReminderText = mReminderText;
     }
 
     @Override
@@ -33,10 +45,12 @@ public class Reminder implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeValue(this.id);
         dest.writeString(this.mReminderText);
     }
 
     protected Reminder(Parcel in) {
+        this.id = (Long) in.readValue(Long.class.getClassLoader());
         this.mReminderText = in.readString();
     }
 

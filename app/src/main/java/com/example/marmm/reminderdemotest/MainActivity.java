@@ -36,6 +36,9 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
     private int mModifyPosition;
 
 
+    static AppDatabase db;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +52,11 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 
 
         mNewReminderText = findViewById(R.id.editText_main);
+
+
+        db = AppDatabase.getInstance(this);
+        updateUI();
+
 
         mReminders = new ArrayList<>();
 
@@ -82,8 +90,10 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 
                     //Add the text to the list (datamodel)
 
-                    mReminders.add(newReminder);
+//                    mReminders.add(newReminder);
 
+
+                    db.reminderDao().insertReminders(newReminder);
 
 //Tell the adapter that the data set has been modified: the screen will be refreshed.
                 updateUI();
@@ -123,8 +133,10 @@ and uses callbacks to signal when a user is performing these actions.
 
                         //Get the index corresponding to the selected position
                         int position = (viewHolder.getAdapterPosition());
-                        mReminders.remove(position);
-                        mAdapter.notifyItemRemoved(position);
+                        //mReminders.remove(position);
+                        db.reminderDao().deleteReminders(mReminders.get(position));
+                        updateUI();
+                        //mAdapter.notifyItemRemoved(position);
                     }
                 };
 
@@ -136,11 +148,13 @@ and uses callbacks to signal when a user is performing these actions.
 
 
     private void updateUI() {
+        mReminders = db.reminderDao().getAllReminders();
         if (mAdapter == null) {
             mAdapter = new ReminderAdapter(this, mReminders);
             mRecyclerView.setAdapter(mAdapter);
+
         } else {
-            mAdapter.notifyDataSetChanged();
+            mAdapter.swapList(mReminders);
         }
     }
 
