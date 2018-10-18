@@ -11,11 +11,11 @@ public class Reminder implements Parcelable {
 
 
     @PrimaryKey(autoGenerate = true)
-    public Long id;
+    private Long id;
 
 
     @ColumnInfo(name = "remindertext")
-    public String mReminderText;
+    private String mReminderText;
 
     public Long getId() {
         return id;
@@ -25,7 +25,7 @@ public class Reminder implements Parcelable {
         this.id = id;
     }
 
-    public String getmReminderText() {
+    public String getReminderText() {
         return mReminderText;
     }
 
@@ -37,6 +37,7 @@ public class Reminder implements Parcelable {
 
         this.mReminderText = mReminderText;
     }
+
 
     @Override
     public int describeContents() {
@@ -54,7 +55,7 @@ public class Reminder implements Parcelable {
         this.mReminderText = in.readString();
     }
 
-    public static final Parcelable.Creator<Reminder> CREATOR = new Parcelable.Creator<Reminder>() {
+    public static final Creator<Reminder> CREATOR = new Creator<Reminder>() {
         @Override
         public Reminder createFromParcel(Parcel source) {
             return new Reminder(source);

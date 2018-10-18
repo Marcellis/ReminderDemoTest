@@ -1,6 +1,7 @@
 package com.example.marmm.reminderdemotest;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,10 +15,19 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import static com.example.marmm.reminderdemotest.NumbersApiService.BASE_URL;
 
 public class MainActivity extends AppCompatActivity implements ReminderAdapter.ReminderClickListener{
 
@@ -25,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
     private List<Reminder> mReminders;
     private EditText mNewReminderText;
 
+    private TextView mQuoteTextView;
 
     private ReminderAdapter mAdapter;
 
@@ -38,6 +49,11 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 
     static AppDatabase db;
 
+    public final static int TASK_GET_ALL_REMINDERS = 0;
+    public final static int TASK_DELETE_REMINDER = 1;
+    public final static int TASK_UPDATE_REMINDER = 2;
+    public final static int TASK_INSERT_REMINDER = 3;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mQuoteTextView= findViewById(R.id.quote_message);
 
         mRecyclerView = findViewById(R.id.recyclerView);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
@@ -53,13 +70,13 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 
         mNewReminderText = findViewById(R.id.editText_main);
 
-
+        new GetQuoteOfTheDayTask().execute();
 
         mReminders = new ArrayList<>();
 
         db = AppDatabase.getInstance(this);
-        updateUI();
 
+        new ReminderAsyncTask(TASK_GET_ALL_REMINDERS).execute();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -81,10 +98,11 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 //                    mReminders.add(newReminder);
 
 
-                    db.reminderDao().insertReminders(newReminder);
+//                    db.reminderDao().insertReminders(newReminder);
+
+                    new ReminderAsyncTask(TASK_INSERT_REMINDER).execute(newReminder);
 
 //Tell the adapter that the data set has been modified: the screen will be refreshed.
-                updateUI();
 
 
                     //Initialize the EditText for the next item
@@ -122,7 +140,8 @@ and uses callbacks to signal when a user is performing these actions.
                         //Get the index corresponding to the selected position
                         int position = (viewHolder.getAdapterPosition());
                         //mReminders.remove(position);
-                        db.reminderDao().deleteReminders(mReminders.get(position));
+             //           db.reminderDao().deleteReminders(mReminders.get(position));
+                        new ReminderAsyncTask(TASK_DELETE_REMINDER).execute(mReminders.get(position));
                         updateUI();
                         //mAdapter.notifyItemRemoved(position);
                     }
@@ -134,9 +153,18 @@ and uses callbacks to signal when a user is performing these actions.
 
     }
 
+    public void setQuoteTextView(String quoteMessage) {
+        mQuoteTextView.setText(quoteMessage);
+    }
+
+
+    public void onReminderDbUpdated(List list) {
+        mReminders = list;
+        updateUI();
+    }
+
 
     private void updateUI() {
-        mReminders = db.reminderDao().getAllReminders();
         if (mAdapter == null) {
             mAdapter = new ReminderAdapter(this, mReminders);
             mRecyclerView.setAdapter(mAdapter);
@@ -189,5 +217,78 @@ and uses callbacks to signal when a user is performing these actions.
             }
         }
     }
+
+
+
+    public class ReminderAsyncTask extends AsyncTask<Reminder, Void, List<Reminder>> {
+
+        private int taskCode;
+
+        public ReminderAsyncTask(int taskCode) {
+            this.taskCode = taskCode;
+        }
+
+        @Override
+        protected List<Reminder> doInBackground(Reminder... reminders) {
+            switch (taskCode) {
+                case TASK_DELETE_REMINDER:
+                    db.reminderDao().deleteReminders(reminders[0]);
+                    break;
+                case TASK_UPDATE_REMINDER:
+                    db.reminderDao().updateReminders(reminders[0]);
+                    break;
+                case TASK_INSERT_REMINDER:
+                    db.reminderDao().insertReminders(reminders[0]);
+                    break;
+            }
+
+            //To return a new list with the updated data, we get all the data from the database again.
+            return db.reminderDao().getAllReminders();
+        }
+
+        @Override
+        protected void onPostExecute(List list) {
+            super.onPostExecute(list);
+            onReminderDbUpdated(list);
+        }
+
+    }
+
+    public class GetQuoteOfTheDayTask extends AsyncTask<Void, Void, DayQuoteItem> {
+
+
+        @Override
+        protected DayQuoteItem doInBackground(Void... voids) {
+            // Build retrofit instance, with giving the base url and converter
+
+            // Get the interface where the http requests are in.
+            NumbersApiService service = NumbersApiService.retrofit.create(NumbersApiService.class);
+
+
+            Calendar calendar = Calendar.getInstance();
+
+            int month = calendar.get(Calendar.MONTH);
+            int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+
+            DayQuoteItem dayQuoteItem = null;
+            try {
+                dayQuoteItem = service.getTodaysQuote(month, dayOfMonth).execute().body();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return dayQuoteItem;
+        }
+
+
+        @Override
+        protected void onPostExecute(DayQuoteItem dayQuoteItem) {
+
+
+            setQuoteTextView(dayQuoteItem.getText());
+        }
+    }
+
 
 }
