@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -70,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements ReminderAdapter.R
 
         mNewReminderText = findViewById(R.id.editText_main);
 
-        new GetQuoteOfTheDayTask().execute();
+        requestData();
 
         mReminders = new ArrayList<>();
 
@@ -254,41 +257,36 @@ and uses callbacks to signal when a user is performing these actions.
 
     }
 
-    public class GetQuoteOfTheDayTask extends AsyncTask<Void, Void, DayQuoteItem> {
 
 
-        @Override
-        protected DayQuoteItem doInBackground(Void... voids) {
-            // Build retrofit instance, with giving the base url and converter
+    private void requestData()
 
-            // Get the interface where the http requests are in.
+    {
             NumbersApiService service = NumbersApiService.retrofit.create(NumbersApiService.class);
-
-
             Calendar calendar = Calendar.getInstance();
 
             int month = calendar.get(Calendar.MONTH);
             int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
 
-            DayQuoteItem dayQuoteItem = null;
-            try {
-                dayQuoteItem = service.getTodaysQuote(month, dayOfMonth).execute().body();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-            return dayQuoteItem;
-        }
+            Call<DayQuoteItem> call = service.getTodaysQuote(month, dayOfMonth);
 
 
-        @Override
-        protected void onPostExecute(DayQuoteItem dayQuoteItem) {
+            call.enqueue(new Callback<DayQuoteItem>() {
+                @Override
+                public void onResponse(Call<DayQuoteItem> call, Response<DayQuoteItem> response) {
+                    DayQuoteItem dayQuoteItem = response.body();
+                    setQuoteTextView(dayQuoteItem.getText());
+                }
+
+                @Override
+                public void onFailure(Call<DayQuoteItem> call, Throwable t) {
+
+                }
+            });
 
 
-            setQuoteTextView(dayQuoteItem.getText());
-        }
     }
-
 
 }
